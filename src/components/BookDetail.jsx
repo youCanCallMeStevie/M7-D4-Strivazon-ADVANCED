@@ -2,15 +2,53 @@ import React, { Component } from "react";
 import Button from "react-bootstrap/Button";
 import { connect } from "react-redux";
 
+// redux-thunk is necessary for delaying the dispatch of action,
+// or for conditionally dispatch an action
+// or for performing async operations before the dispatching
+
 const mapStateToProps = (state) => state;
 
 const mapDispatchToProps = (dispatch) => ({
   addToCart: (id) =>
-    dispatch({
-      type: "ADD_ITEM_TO_CART",
-      payload: id,
-    }),
+    // fetch the data
+    dispatch(
+      {
+        type: "ADD_ITEM_TO_CART",
+        payload: id,
+      }
+    ),
+
+  striveSchool: () => dispatch({ type: 'STRIVE_SCHOOL' }),
+
+  addToCartWithThunk: (id) =>
+    dispatch(async (dispatch, getState) => {
+      // perform fetches, do if/elses, conditionally perform logic
+      // ASYNC STUFF!!
+      const resp = await fetch('https://jsonplaceholder.typicode.com/todos/1')
+      const data = await resp.json()
+      console.log(data)
+      console.log('current state: ', getState().cart)
+      if (resp.ok) {
+        dispatch(
+          {
+            type: "ADD_ITEM_TO_CART",
+            payload: id,
+          }
+        )
+      } else {
+        dispatch(
+          {
+            type: "SET_ERROR",
+            payload: data,
+          }
+        )
+      }
+    })
 });
+
+// with redux-thunk we can create action-creators that can not only dispatch ACTIONS,
+// but that can also dispatch FUNCTIONS
+
 
 class BookDetail extends Component {
   constructor(props) {
@@ -39,6 +77,9 @@ class BookDetail extends Component {
           </div>
           <div className="row mt-3">
             <div className="col-sm-5">
+              {
+                this.props.cart.error && <h1>ERROR</h1>
+              }
               <img
                 className="book-cover"
                 src={this.state.book.imageUrl}
@@ -57,7 +98,7 @@ class BookDetail extends Component {
               {this.props.user.username ? (
                 <Button
                   color="primary"
-                  onClick={() => this.props.addToCart(this.state.book.id)}
+                  onClick={() => this.props.addToCartWithThunk(this.state.book.id)}
                 >
                   BUY
                 </Button>
